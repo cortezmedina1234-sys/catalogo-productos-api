@@ -1,0 +1,32 @@
+{
+  "name": "Consultar catálogo de productos",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fca439a4-061e-47c6-b55a-7dc8f46910a1",
+      "name": "Al ejecutar manualmente",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://TU-API.onrender.com/api/products",
+        "options": {}
+      },
+      "id": "62ce919d-5c65-4567-b772-2ba2af21b94e",
+      "name": "Obtener productos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Al ejecutar manualmente": {
+      "main": [[{"node": "Obtener productos", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "497c3b4a-1c8a-4e02-9a12-0bd6fd530602"
+}

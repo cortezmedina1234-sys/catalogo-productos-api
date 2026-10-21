@@ -1,0 +1,65 @@
+{
+  "name": "Consultar productos y enviar resumen por Gmail",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fca439a4-061e-47c6-b55a-7dc8f46910a1",
+      "name": "Inicio manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:3000/api/products",
+        "options": {}
+      },
+      "id": "62ce919d-5c65-4567-b772-2ba2af21b94e",
+      "name": "Consultar API de productos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const response = $input.first()?.json ?? {};\nconst products = Array.isArray(response.data) ? response.data : [];\nconst escapeHtml = (value) => String(value ?? '').replace(/[&<>\\\"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\\\"': '&quot;', \"'\": '&#39;' })[character]);\nconst money = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });\nconst rows = products.map((product) => `<tr><td>${escapeHtml(product.name)}</td><td>${escapeHtml(product.category)}</td><td>${money.format(Number(product.price))}</td><td>${Number(product.stock)}</td></tr>`).join('');\nconst table = products.length ? `<table style=\"border-collapse:collapse;width:100%\"><thead><tr><th style=\"text-align:left;border-bottom:1px solid #ccc;padding:8px\">Producto</th><th style=\"text-align:left;border-bottom:1px solid #ccc;padding:8px\">Categoría</th><th style=\"text-align:left;border-bottom:1px solid #ccc;padding:8px\">Precio</th><th style=\"text-align:left;border-bottom:1px solid #ccc;padding:8px\">Existencias</th></tr></thead><tbody>${rows}</tbody></table>` : '<p>La API no devolvió productos.</p>';\nreturn [{ json: { subject: `Catálogo de productos (${products.length})`, html: `<div style=\"font-family:Arial,sans-serif\"><h2>Catálogo de productos</h2><p>Se encontraron ${products.length} productos en la API.</p>${table}<p>Correo generado automáticamente desde n8n.</p></div>`, count: products.length } }];"
+      },
+      "id": "27754210-1480-482e-b207-10f04f4c913b",
+      "name": "Preparar resumen del catálogo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "REEMPLAZA_CON_TU_CORREO",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "2b2da42b-757c-479f-874e-9188a964ac13",
+      "name": "Enviar correo por Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1020, 300]
+    }
+  ],
+  "connections": {
+    "Inicio manual": {
+      "main": [[{"node": "Consultar API de productos", "type": "main", "index": 0}]]
+    },
+    "Consultar API de productos": {
+      "main": [[{"node": "Preparar resumen del catálogo", "type": "main", "index": 0}]]
+    },
+    "Preparar resumen del catálogo": {
+      "main": [[{"node": "Enviar correo por Gmail", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "266a95ed-74ca-437a-832f-792c115e903e"
+}
